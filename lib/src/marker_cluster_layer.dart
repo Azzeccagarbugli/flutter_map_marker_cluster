@@ -719,12 +719,78 @@ class _MarkerClusterLayerState extends State<MarkerClusterLayer>
     };
   }
 
+  void _onMarkerTapInsideCluster(MarkerNode marker, PopupOptions popupOptions) {
+    if (_animating) return;
+
+    final markerIndex = spiderfyCluster!.markers.indexOf(marker);
+
+    if (markerIndex == -1) return;
+
+    final markerInCluster = _generatePointSpiderfy(
+      spiderfyCluster!.markers.length,
+      _mapCalculator.getPixelFromPoint(spiderfyCluster!.bounds.center),
+    )[markerIndex];
+
+    if (markerInCluster == null) return;
+
+    final pointToLatLng = _mapCalculator.pointToLatLng(
+      markerInCluster,
+    );
+
+    popupOptions.markerTapBehavior.apply(
+      PopupSpec(
+        marker: marker.marker,
+        markerPointOverride: pointToLatLng,
+      ),
+      PopupState.maybeOf(context, listen: false)!,
+      popupOptions.popupController,
+    );
+
+    if (!widget.options.centerMarkerOnClick) return;
+
+    final center = widget.mapCamera.center;
+
+    final latTween = Tween<double>(
+      begin: center.latitude,
+      end: pointToLatLng.latitude,
+    );
+
+    final lonTween = Tween<double>(
+      begin: center.longitude,
+      end: pointToLatLng.longitude,
+    );
+
+    final Animation<double> animation = CurvedAnimation(
+      parent: _centerMarkerController,
+      curve: widget.options.animationsOptions.centerMarkerCurves,
+    );
+
+    final listener = _centerMarkerListener(animation, latTween, lonTween);
+    _centerMarkerController.addListener(listener);
+    _centerMarkerController.forward().then((_) {
+      _centerMarkerController
+        ..removeListener(listener)
+        ..reset();
+    });
+
+    return;
+  }
+
   VoidCallback _onMarkerTap(MarkerNode marker) {
     return () {
       if (_animating) return;
 
       if (widget.options.popupOptions != null) {
         final popupOptions = widget.options.popupOptions!;
+
+        if (spiderfyCluster != null &&
+            spiderfyCluster!.markers.contains(marker)) {
+          return _onMarkerTapInsideCluster(
+            marker,
+            popupOptions,
+          );
+        }
+
         popupOptions.markerTapBehavior.apply(
           PopupSpec.wrap(marker.marker),
           PopupState.maybeOf(context, listen: false)!,
