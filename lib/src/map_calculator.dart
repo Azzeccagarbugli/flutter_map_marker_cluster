@@ -20,4 +20,8 @@ class MapCalculator {
 
   LatLng unproject(Point point, {double? zoom}) =>
       mapState.unproject(point, zoom);
+
+  LatLng pointToLatLng(Point<num> point) => mapState.pointToLatLng(
+        point,
+      );
 }
