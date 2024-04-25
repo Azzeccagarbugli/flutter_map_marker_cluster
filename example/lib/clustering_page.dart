@@ -201,9 +201,8 @@ class _ClusteringPageState extends State<ClusteringPage> {
             ),
             MarkerClusterLayerWidget(
               options: MarkerClusterLayerOptions(
-                spiderfyCircleRadius: 80,
-                spiderfySpiralDistanceMultiplier: 2,
-                circleSpiralSwitchover: 12,
+                circleSpiralSwitchover: 120,
+                spiderfyCircleRadius: 90,
                 maxClusterRadius: 120,
                 rotate: true,
                 size: const Size(40, 40),
